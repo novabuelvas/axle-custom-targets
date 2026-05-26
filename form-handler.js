@@ -267,7 +267,45 @@ function fileToBase64(file) {
 
 // Wire up form button clicks
 document.addEventListener('DOMContentLoaded', () => {
-  // Register Full Service buttons
+  // Open Full Service Modal
+  function openFullServiceModal(e) {
+    e.preventDefault();
+    const modal = document.getElementById('fullServiceModal');
+    if (modal) modal.style.display = 'flex';
+  }
+  
+  // Open DIY Modal
+  function openDiyModal(e) {
+    e.preventDefault();
+    const modal = document.getElementById('diyModal');
+    if (modal) modal.style.display = 'flex';
+  }
+  
+  // Scroll to pricing section
+  function scrollToPricing(e) {
+    e.preventDefault();
+    const pricingSection = document.getElementById('pricingSection');
+    if (pricingSection) {
+      pricingSection.scrollIntoView({ behavior: 'smooth' });
+    }
+  }
+  
+  // Close modal
+  function closeModal(modal) {
+    if (modal) modal.style.display = 'none';
+  }
+  
+  // Register ALL startProof buttons to open Full Service form modal
+  document.querySelectorAll('.startProof').forEach(btn => {
+    btn.addEventListener('click', openFullServiceModal);
+  });
+  
+  // Register ALL navPricing buttons to scroll to pricing section
+  document.querySelectorAll('.navPricing').forEach(btn => {
+    btn.addEventListener('click', scrollToPricing);
+  });
+  
+  // Register Full Service buttons (legacy data-form attribute)
   function registerFullServiceButtons() {
     document.querySelectorAll('button').forEach(btn => {
       const text = btn.textContent?.trim() || '';
@@ -296,22 +334,6 @@ document.addEventListener('DOMContentLoaded', () => {
     document.querySelectorAll('[data-form="diy"]').forEach(btn => {
       btn.addEventListener('click', openDiyModal);
     });
-  }
-  
-  function openFullServiceModal(e) {
-    e.preventDefault();
-    const modal = document.getElementById('fullServiceModal');
-    if (modal) modal.style.display = 'flex';
-  }
-  
-  function openDiyModal(e) {
-    e.preventDefault();
-    const modal = document.getElementById('diyModal');
-    if (modal) modal.style.display = 'flex';
-  }
-  
-  function closeModal(modal) {
-    if (modal) modal.style.display = 'none';
   }
   
   // Register button handlers
