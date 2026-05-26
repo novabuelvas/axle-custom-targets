@@ -1,13 +1,38 @@
 const sgMail = require('@sendgrid/mail');
 
 exports.handler = async (event, context) => {
-  if (event.httpMethod !== 'POST') {
-    return { statusCode: 405, body: 'Method Not Allowed' };
+  // Enable CORS
+  const headers = {
+    'Access-Control-Allow-Origin': '*',
+    'Access-Control-Allow-Headers': 'Content-Type',
+    'Content-Type': 'application/json'
+  };
+
+  if (event.httpMethod === 'OPTIONS') {
+    return { statusCode: 200, headers };
   }
 
-  sgMail.setApiKey(process.env.SENDGRID_API_KEY);
+  if (event.httpMethod !== 'POST') {
+    return { 
+      statusCode: 405, 
+      headers,
+      body: JSON.stringify({ error: 'Method Not Allowed' })
+    };
+  }
 
   try {
+    const apiKey = process.env.SENDGRID_API_KEY;
+    if (!apiKey) {
+      console.error('SENDGRID_API_KEY not configured');
+      return {
+        statusCode: 500,
+        headers,
+        body: JSON.stringify({ success: false, error: 'Email service not configured' })
+      };
+    }
+
+    sgMail.setApiKey(apiKey);
+
     const formData = JSON.parse(event.body);
     const orderId = formData.orderId || `0716-${Math.random().toString(36).substr(2, 4).toUpperCase()}`;
 
@@ -15,9 +40,13 @@ exports.handler = async (event, context) => {
     let attachments = [];
     if (formData.files && formData.files.length > 0) {
       for (const file of formData.files) {
+        const base64Content = file.data.includes('base64,') 
+          ? file.data.split('base64,')[1] 
+          : file.data;
+        
         attachments.push({
           filename: file.name,
-          content: file.data.split('base64,')[1],
+          content: base64Content,
           type: file.type,
           disposition: 'attachment'
         });
@@ -68,13 +97,15 @@ Submitted: ${new Date().toISOString()}
 
     return {
       statusCode: 200,
+      headers,
       body: JSON.stringify({ success: true, orderId: orderId })
     };
   } catch (error) {
     console.error('Form submission error:', error);
     return {
       statusCode: 500,
-      body: JSON.stringify({ error: 'Form submission failed' })
+      headers,
+      body: JSON.stringify({ success: false, error: error.message || 'Form submission failed' })
     };
   }
 };

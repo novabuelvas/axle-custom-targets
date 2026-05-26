@@ -16,12 +16,22 @@ async function submitFullServiceForm(event) {
   const submitBtn = form.querySelector('button[type="submit"]');
   const statusDiv = form.querySelector('.form-status');
   
+  // Show processing state
+  if (statusDiv) {
+    statusDiv.classList.add('active');
+    statusDiv.classList.remove('success', 'error');
+    statusDiv.innerHTML = `⏳ Processing...`;
+  }
+  
   // Validate required fields
   const requiredFields = ['name', 'email', 'phone', 'streetAddress', 'city', 'state', 'zip', 'serviceType', 'quantity'];
   for (const field of requiredFields) {
     const input = form.querySelector(`[name="${field}"]`);
     if (!input || !input.value.trim()) {
-      if (statusDiv) statusDiv.innerHTML = `❌ Please fill in all required fields.`;
+      if (statusDiv) {
+        statusDiv.classList.add('error');
+        statusDiv.innerHTML = `❌ Please fill in all required fields.`;
+      }
       return;
     }
   }
@@ -29,12 +39,14 @@ async function submitFullServiceForm(event) {
   // Validate email format
   const email = form.querySelector('[name="email"]').value;
   if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-    if (statusDiv) statusDiv.innerHTML = `❌ Please enter a valid email address.`;
+    if (statusDiv) {
+      statusDiv.classList.add('error');
+      statusDiv.innerHTML = `❌ Please enter a valid email address.`;
+    }
     return;
   }
 
   submitBtn.disabled = true;
-  if (statusDiv) statusDiv.innerHTML = `⏳ Submitting your order...`;
 
   try {
     // Collect file uploads as base64
@@ -45,7 +57,10 @@ async function submitFullServiceForm(event) {
       for (const file of fileInput.files) {
         totalSize += file.size;
         if (totalSize > 75 * 1024 * 1024) {
-          if (statusDiv) statusDiv.innerHTML = `❌ Total file size exceeds 75MB limit.`;
+          if (statusDiv) {
+            statusDiv.classList.add('error');
+            statusDiv.innerHTML = `❌ Total file size exceeds 75MB limit.`;
+          }
           submitBtn.disabled = false;
           return;
         }
@@ -83,19 +98,29 @@ async function submitFullServiceForm(event) {
 
     const result = await response.json();
 
-    if (result.success) {
-      if (statusDiv) statusDiv.innerHTML = `✅ Your order received! Check your email for confirmation.`;
+    if (response.ok && result.success) {
+      if (statusDiv) {
+        statusDiv.classList.remove('error');
+        statusDiv.classList.add('success');
+        statusDiv.innerHTML = `✅ Your order received! Check your email for confirmation.`;
+      }
       form.reset();
       setTimeout(() => {
         submitBtn.disabled = false;
       }, 2000);
     } else {
-      if (statusDiv) statusDiv.innerHTML = `❌ Submission failed. Please try again.`;
+      if (statusDiv) {
+        statusDiv.classList.add('error');
+        statusDiv.innerHTML = `❌ Submission failed. Please try again.`;
+      }
       submitBtn.disabled = false;
     }
   } catch (error) {
     console.error('Form error:', error);
-    if (statusDiv) statusDiv.innerHTML = `❌ An error occurred. Please try again.`;
+    if (statusDiv) {
+      statusDiv.classList.add('error');
+      statusDiv.innerHTML = `❌ An error occurred. Please try again.`;
+    }
     submitBtn.disabled = false;
   }
 }
@@ -108,12 +133,22 @@ async function submitDiyForm(event) {
   const submitBtn = form.querySelector('button[type="submit"]');
   const statusDiv = form.querySelector('.form-status');
   
+  // Show processing state
+  if (statusDiv) {
+    statusDiv.classList.add('active');
+    statusDiv.classList.remove('success', 'error');
+    statusDiv.innerHTML = `⏳ Processing...`;
+  }
+  
   // Validate required fields
   const requiredFields = ['name', 'email', 'phone', 'quantity'];
   for (const field of requiredFields) {
     const input = form.querySelector(`[name="${field}"]`);
     if (!input || !input.value.trim()) {
-      if (statusDiv) statusDiv.innerHTML = `❌ Please fill in all required fields.`;
+      if (statusDiv) {
+        statusDiv.classList.add('error');
+        statusDiv.innerHTML = `❌ Please fill in all required fields.`;
+      }
       return;
     }
   }
@@ -121,19 +156,24 @@ async function submitDiyForm(event) {
   // Validate email format
   const email = form.querySelector('[name="email"]').value;
   if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-    if (statusDiv) statusDiv.innerHTML = `❌ Please enter a valid email address.`;
+    if (statusDiv) {
+      statusDiv.classList.add('error');
+      statusDiv.innerHTML = `❌ Please enter a valid email address.`;
+    }
     return;
   }
 
   // Preview PNG is required
   const previewInput = form.querySelector('[name="previewPng"]');
   if (!previewInput || !previewInput.files.length) {
-    if (statusDiv) statusDiv.innerHTML = `❌ Please upload your design preview (PNG).`;
+    if (statusDiv) {
+      statusDiv.classList.add('error');
+      statusDiv.innerHTML = `❌ Please upload your design preview (PNG).`;
+    }
     return;
   }
 
   submitBtn.disabled = true;
-  if (statusDiv) statusDiv.innerHTML = `⏳ Submitting your design...`;
 
   try {
     const previewFile = previewInput.files[0];
@@ -160,7 +200,10 @@ async function submitDiyForm(event) {
       try {
         designJson = JSON.parse(designInput.value);
       } catch (e) {
-        if (statusDiv) statusDiv.innerHTML = `❌ Invalid design JSON format.`;
+        if (statusDiv) {
+          statusDiv.classList.add('error');
+          statusDiv.innerHTML = `❌ Invalid design JSON format.`;
+        }
         submitBtn.disabled = false;
         return;
       }
@@ -185,19 +228,29 @@ async function submitDiyForm(event) {
 
     const result = await response.json();
 
-    if (result.success) {
-      if (statusDiv) statusDiv.innerHTML = `✅ Your order received! Check your email for confirmation.`;
+    if (response.ok && result.success) {
+      if (statusDiv) {
+        statusDiv.classList.remove('error');
+        statusDiv.classList.add('success');
+        statusDiv.innerHTML = `✅ Your order received! Check your email for confirmation.`;
+      }
       form.reset();
       setTimeout(() => {
         submitBtn.disabled = false;
       }, 2000);
     } else {
-      if (statusDiv) statusDiv.innerHTML = `❌ Submission failed. Please try again.`;
+      if (statusDiv) {
+        statusDiv.classList.add('error');
+        statusDiv.innerHTML = `❌ Submission failed. Please try again.`;
+      }
       submitBtn.disabled = false;
     }
   } catch (error) {
     console.error('Form error:', error);
-    if (statusDiv) statusDiv.innerHTML = `❌ An error occurred. Please try again.`;
+    if (statusDiv) {
+      statusDiv.classList.add('error');
+      statusDiv.innerHTML = `❌ An error occurred. Please try again.`;
+    }
     submitBtn.disabled = false;
   }
 }
@@ -214,39 +267,70 @@ function fileToBase64(file) {
 
 // Wire up form button clicks
 document.addEventListener('DOMContentLoaded', () => {
-  // Full Service form buttons
-  const fullServiceButtons = document.querySelectorAll('[data-form="full-service"]');
-  fullServiceButtons.forEach(btn => {
-    btn.addEventListener('click', (e) => {
-      e.preventDefault();
-      const modal = document.getElementById('fullServiceModal');
-      if (modal) modal.style.display = 'flex';
+  // Register Full Service buttons
+  function registerFullServiceButtons() {
+    document.querySelectorAll('button').forEach(btn => {
+      const text = btn.textContent?.trim() || '';
+      const hasDataAttr = btn.getAttribute('data-form');
+      
+      // Register buttons with explicit data-form attribute
+      if (hasDataAttr === 'full-service') {
+        btn.addEventListener('click', openFullServiceModal);
+        return;
+      }
+      
+      // Register buttons by text content (hero, sections, pricing)
+      if (text.includes('GET YOUR FREE PROOF') ||
+          text === 'CLICK HERE' ||
+          text === 'START FREE PROOF') {
+        // Skip if already has a data-form attribute pointing elsewhere
+        if (hasDataAttr && hasDataAttr !== 'full-service') return;
+        
+        btn.addEventListener('click', openFullServiceModal);
+      }
     });
-  });
-
-  // DIY form buttons
-  const diyButtons = document.querySelectorAll('[data-form="diy"]');
-  diyButtons.forEach(btn => {
-    btn.addEventListener('click', (e) => {
-      e.preventDefault();
-      const modal = document.getElementById('diyModal');
-      if (modal) modal.style.display = 'flex';
+  }
+  
+  // Register DIY buttons
+  function registerDiyButtons() {
+    document.querySelectorAll('[data-form="diy"]').forEach(btn => {
+      btn.addEventListener('click', openDiyModal);
     });
-  });
-
+  }
+  
+  function openFullServiceModal(e) {
+    e.preventDefault();
+    const modal = document.getElementById('fullServiceModal');
+    if (modal) modal.style.display = 'flex';
+  }
+  
+  function openDiyModal(e) {
+    e.preventDefault();
+    const modal = document.getElementById('diyModal');
+    if (modal) modal.style.display = 'flex';
+  }
+  
+  function closeModal(modal) {
+    if (modal) modal.style.display = 'none';
+  }
+  
+  // Register button handlers
+  registerFullServiceButtons();
+  registerDiyButtons();
+  
   // Modal close buttons
   document.querySelectorAll('[data-close-modal]').forEach(btn => {
     btn.addEventListener('click', (e) => {
       e.preventDefault();
       const modal = btn.closest('.form-modal');
-      if (modal) modal.style.display = 'none';
+      closeModal(modal);
     });
   });
 
   // Close modal on background click
   document.querySelectorAll('.form-modal').forEach(modal => {
     modal.addEventListener('click', (e) => {
-      if (e.target === modal) modal.style.display = 'none';
+      if (e.target === modal) closeModal(modal);
     });
   });
 

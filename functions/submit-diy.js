@@ -1,35 +1,71 @@
 const sgMail = require('@sendgrid/mail');
 
 exports.handler = async (event, context) => {
-  if (event.httpMethod !== 'POST') {
-    return { statusCode: 405, body: 'Method Not Allowed' };
+  // Enable CORS
+  const headers = {
+    'Access-Control-Allow-Origin': '*',
+    'Access-Control-Allow-Headers': 'Content-Type',
+    'Content-Type': 'application/json'
+  };
+
+  if (event.httpMethod === 'OPTIONS') {
+    return { statusCode: 200, headers };
   }
 
-  sgMail.setApiKey(process.env.SENDGRID_API_KEY);
+  if (event.httpMethod !== 'POST') {
+    return { 
+      statusCode: 405, 
+      headers,
+      body: JSON.stringify({ error: 'Method Not Allowed' })
+    };
+  }
 
   try {
+    const apiKey = process.env.SENDGRID_API_KEY;
+    if (!apiKey) {
+      console.error('SENDGRID_API_KEY not configured');
+      return {
+        statusCode: 500,
+        headers,
+        body: JSON.stringify({ success: false, error: 'Email service not configured' })
+      };
+    }
+
+    sgMail.setApiKey(apiKey);
+
     const formData = JSON.parse(event.body);
     const orderId = formData.orderId || `0716-${Math.random().toString(36).substr(2, 4).toUpperCase()}`;
 
     // Parse uploaded files
     let attachments = [];
+    let mockupAttachment = null;
     
     // Add preview PNG
     if (formData.previewPng) {
-      attachments.push({
+      const previewContent = formData.previewPng.includes('base64,')
+        ? formData.previewPng.split('base64,')[1]
+        : formData.previewPng;
+      
+      mockupAttachment = {
         filename: `mockup-${orderId}.png`,
-        content: formData.previewPng.split('base64,')[1],
+        content: previewContent,
         type: 'image/png',
         disposition: 'attachment'
-      });
+      };
+      
+      attachments.push(mockupAttachment);
     }
 
     // Add logos
     if (formData.logos && formData.logos.length > 0) {
       for (const logo of formData.logos) {
+        const logoContent = logo.data.includes('base64,')
+          ? logo.data.split('base64,')[1]
+          : logo.data;
+        
         attachments.push({
           filename: logo.name,
-          content: logo.data.split('base64,')[1],
+          content: logoContent,
           type: logo.type,
           disposition: 'attachment'
         });
@@ -56,7 +92,7 @@ Quantity: ${formData.quantity}
 Submitted: ${new Date().toISOString()}
     `;
 
-    // Send confirmation to customer with mockup
+    // Send confirmation to customer with mockup only
     await sgMail.send({
       to: formData.email,
       from: 'info@axletargets.com',
@@ -69,7 +105,7 @@ Submitted: ${new Date().toISOString()}
         <p>Our team will reach out if we need any adjustments or clarifications.</p>
         <p>Thank you for choosing AXLE Targets!</p>
       `,
-      attachments: [attachments[0]] // Only mockup to customer
+      attachments: mockupAttachment ? [mockupAttachment] : []
     });
 
     // Send full details to info@
@@ -83,13 +119,15 @@ Submitted: ${new Date().toISOString()}
 
     return {
       statusCode: 200,
+      headers,
       body: JSON.stringify({ success: true, orderId: orderId })
     };
   } catch (error) {
     console.error('Form submission error:', error);
     return {
       statusCode: 500,
-      body: JSON.stringify({ error: 'Form submission failed' })
+      headers,
+      body: JSON.stringify({ success: false, error: error.message || 'Form submission failed' })
     };
   }
 };
