@@ -1,0 +1,9 @@
+{
+  "name": "axle-targets",
+  "version": "1.0.0",
+  "description": "AXLE Targets custom order forms with email integration",
+  "main": "index.js",
+  "dependencies": {
+    "@sendgrid/mail": "^8.1.0"
+  }
+}
